@@ -73,10 +73,10 @@ function extractPostParameters (form, files, recipients, parameters)
 {
     files = [].concat(files);
 
-    files.forEach(function(filePath, i) {
+    files.forEach(function(file, i) {
         form.append(
             'files[' + i + ']',
-            fs.createReadStream(filePath)
+            typeof file === 'string' ? fs.createReadStream(file) : file
         );
     });
 
@@ -85,26 +85,6 @@ function extractPostParameters (form, files, recipients, parameters)
     recipients.forEach(function(recipient, i) {
         fillArray(form, recipient, 'recipients['+i+']');
     });
-
-    parameters = parameters || {};
-
-    fillArray(form, parameters, '');
-
-    return form;
-}
-
-function extractPackageParameters (form, sheet, files, parameters)
-{
-    files = [].concat(files);
-
-    files.forEach(function(filePath, i) {
-        form.append(
-            'files[' + i + ']',
-            fs.createReadStream(filePath)
-        );
-    });
-
-    form.append('sheet', fs.createReadStream(sheet));
 
     parameters = parameters || {};
 
@@ -145,12 +125,12 @@ SignaturitClient.prototype.downloadSignedDocument = function (signatureId, docum
     return requestWithDeferred(this._credentials, this._production, 'GET', '/v3/signatures/' + signatureId + '/documents/' + documentId + '/download/signed', undefined, undefined, true);
 };
 
-SignaturitClient.prototype.createSignature = function (filesPath, recipients, params) {
+SignaturitClient.prototype.createSignature = function (files, recipients, params) {
     var deferred = Q.defer(),
         req      = request(this._credentials, this._production, deferred, 'POST', '/v3/signatures.json', undefined, undefined, false),
         form     = req.form();
 
-    extractPostParameters(form, filesPath, recipients, params);
+    extractPostParameters(form, files, recipients, params);
 
     return deferred.promise;
 };
